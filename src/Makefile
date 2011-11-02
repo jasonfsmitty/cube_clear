@@ -6,9 +6,12 @@ TARGET = gems
 SRCS = \
 	time.cpp \
 	log.cpp \
+	sdl.cpp \
 	main.cpp
 
 #-----------------------------------------------------------------------
+
+SDL_LDFLAGS := $(shell sdl-config --libs)
 
 CFLAGS =
 CFLAGS += -DDEBUG
@@ -17,6 +20,7 @@ CFLAGS += -D_THREAD_SAFE -D_GNU_SOURCE -D__USE_GNU
 
 LDFLAGS =
 LDFLAGS += -ldl -lpthread -lrt
+LDFLAGS += -lGL -lGLU $(SDL_LDFLAGS)
 
 CC = g++
 LD = ld

@@ -10,15 +10,15 @@
 #define TRAP() \
 		do{ \
 			logCrit( "*** BREAKPOINT TRIGGERED: returnAddr=%p ***", __builtin_return_address(0) ); \
-			logFlush(); \
+			utils::logFlush(); \
 			raise( SIGTRAP ); \
 		} while( 0 )
 
 #define ALWAYS_ASSERT( exp ) \
 		do { \
-			if( unlinkly( !(exp) ) ) { \
+			if( unlikely( !(exp) ) ) { \
 				logCrit( "*** ASSERTION FAILED: exp='%s', returnAddr=%p ***", # exp, __builtin_return_address(0) ); \
-				logFlush(); \
+				utils::logFlush(); \
 				raise( SIGTRAP ); \
 			} \
 		} while( 0 )
