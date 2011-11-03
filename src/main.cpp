@@ -19,8 +19,6 @@ int main( int argc, char* argv[] )
 
 	logInfo( "Initialization complete." );
 
-	sleep( 5 );
-
 	logInfo( "Exiting ..." );
 	return 0;
 }
