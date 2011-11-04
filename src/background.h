@@ -1,7 +1,7 @@
 #ifndef BACKGROUND_H
 #define BACKGROUND_H
 
-#include "game.h"
+#include "worker.h"
 #include "defines.h"
 #include <vector>
 

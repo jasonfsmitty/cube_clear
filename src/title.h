@@ -1,7 +1,7 @@
 #ifndef GAME_TITLE_H
 #define GAME_TITLE_H
 
-#include "game.h"
+#include "worker.h"
 #include "background.h"
 
 #include <GL/gl.h>
@@ -25,12 +25,6 @@ class TitleScreen : public Worker
 		virtual Worker::Status FrameUpdate( float deltaTime )
 		{
 			m_uptime += deltaTime;
-
-			if( m_uptime >= 10.0f )
-			{
-				logInfo( "Title screen reached max time, exiting" );
-				m_alive = false;
-			}
 
 			glClear( GL_COLOR_BUFFER_BIT );
 			return m_cubes.FrameUpdate( deltaTime );

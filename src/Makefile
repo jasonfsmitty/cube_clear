@@ -8,7 +8,7 @@ SRCS = \
 	log.cpp \
 	sdl.cpp \
 	background.cpp \
-	game.cpp \
+	worker.cpp \
 	main.cpp
 
 #-----------------------------------------------------------------------

@@ -13,7 +13,7 @@ namespace block {
 		config.color[0] = 0.00f;
 		config.color[1] = 0.50f;
 		config.color[2] = 0.60f;
-		config.color[3] = 0.25f;
+		config.color[3] = 0.20f;
 
 		config.bgColor[0] = 0.0f;
 		config.bgColor[1] = 0.0f;
@@ -22,12 +22,12 @@ namespace block {
 
 		config.minVel = 1.0f;
 		config.maxVel = 2.5f;
-		config.minSpin = 45.0f;
-		config.maxSpin = 100.0f;
+		config.minSpin = 35.0f;
+		config.maxSpin = 60.0f;
 		config.minSize = 0.25f;
 		config.maxSize = 1.25f;
 
-		config.area = 7.5f;
+		config.area = 8.5f;
 		config.numBlocks = 500;
 	}
 
@@ -205,7 +205,7 @@ Worker::Status CubeBackground::FrameUpdate( float deltaTime )
 					4.0f / 3.0f,
 					4.0f,
 					40.0f   );
-#if 0
+#if 1
 	static float angle = utils::randf( 0.0f, 360.0f );
 
 	angle += deltaTime * 9.0f;
@@ -213,7 +213,7 @@ Worker::Status CubeBackground::FrameUpdate( float deltaTime )
 	// setup the viewing matrix...
 	gluLookAt( 0.0f, 0.0f, 7.0f,  // eye
 		       0.0f, 0.0f, 0.0f,   // center
-			   cos(angle * 3.24f/180.0f), sin(angle*3.14f/180.0f), 0.0f ); // up
+			   cos(angle * 3.14f/180.0f), sin(angle*3.14f/180.0f), 0.0f ); // up
 #else
 	// setup the viewing matrix...
 	gluLookAt( 0.0f, 0.0f, 10.0f,  // eye

@@ -3,7 +3,7 @@
 
 #include "log.h"
 #include "sdl.h"
-#include "game.h"
+#include "worker.h"
 #include "title.h"
 #include "time.h"
 
