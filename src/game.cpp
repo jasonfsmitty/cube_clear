@@ -14,7 +14,7 @@ MassWorker::~MassWorker( void )
 {
 	while( ! m_workers.empty() )
 	{
-		delete m_workers.front();
+		delete m_workers.front().worker;
 		m_workers.pop_front();
 	}
 }
@@ -23,7 +23,7 @@ MassWorker::~MassWorker( void )
 void MassWorker::Insert( Worker* worker )
 {
 	ASSERT( worker );
-	m_workers.push_back( worker );
+	m_workers.push_back( WorkerInfo( worker ) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,17 +32,17 @@ void MassWorker::Cleanup( bool force )
 	if( !m_dirty && !force )
 		return;
 
-	std::list< Worker* >::iterator iter, tmp;
+	std::list< WorkerInfo >::iterator iter, tmp;
 
 	iter = m_workers.begin();
 	while( iter != m_workers.end() )
 	{
-		if( (*iter)->IsAlive() )
+		if( (*iter).IsAlive() )
 			iter++;
 		else
 		{
 			tmp = iter++;
-			delete *tmp;
+			delete (*tmp).worker;
 			m_workers.erase( tmp );
 		}
 	}
@@ -53,20 +53,23 @@ void MassWorker::Cleanup( bool force )
 ///////////////////////////////////////////////////////////////////////////////
 Worker::Status MassWorker::FrameUpdate( float deltaTime )
 {
-	std::list< Worker* >::iterator iter;
+	std::list< WorkerInfo >::iterator iter;
 
 	for( iter = m_workers.begin(); iter != m_workers.end(); iter++ )
 	{
-		Worker* worker = *iter;
-		if( ! worker->IsAlive() )
+		WorkerInfo& info = *iter;
+		if( ! info.IsAlive() )
 		{
 			m_dirty = true;
 			continue;
 		}
 
-		Worker::Status status = worker->FrameUpdate( deltaTime );
+		Worker::Status status = info.worker->FrameUpdate( deltaTime );
 		if( status != Worker::Continue )
-			return status;
+		{
+			info.Kill();
+			m_dirty = true;
+		}
 	}
 
 	return Worker::Continue;
@@ -75,20 +78,23 @@ Worker::Status MassWorker::FrameUpdate( float deltaTime )
 ///////////////////////////////////////////////////////////////////////////////
 Worker::Status MassWorker::HandleEvent( const SDL_Event& event )
 {
-	std::list< Worker* >::iterator iter;
+	std::list< WorkerInfo >::iterator iter;
 
 	for( iter = m_workers.begin(); iter != m_workers.end(); iter++ )
 	{
-		Worker* worker = *iter;
-		if( ! worker->IsAlive() )
+		WorkerInfo& info = *iter;
+		if( ! info.IsAlive() )
 		{
 			m_dirty = true;
 			continue;
 		}
 
-		Worker::Status status = worker->HandleEvent( event );
+		Worker::Status status = info.worker->HandleEvent( event );
 		if( status != Worker::Continue )
-			return status;
+		{
+			info.Kill();
+			m_dirty = true;
+		}
 	}
 
 	return Worker::Continue;

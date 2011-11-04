@@ -33,7 +33,19 @@ class MassWorker : public Worker
 		virtual bool IsAlive( void ) { return ! m_workers.empty(); }
 
 	private:
-		std::list< Worker* > m_workers;
+		struct WorkerInfo
+		{
+			Worker* worker;
+			bool alive;
+
+			WorkerInfo( Worker* w )
+				: worker(w), alive(true) {}
+
+			void Kill( void ) { alive=false; }
+			bool IsAlive( void ) { return worker->IsAlive() && alive; }
+		};
+
+		std::list< WorkerInfo > m_workers;
 		bool m_dirty;
 };
 

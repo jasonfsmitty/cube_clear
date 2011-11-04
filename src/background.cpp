@@ -15,9 +15,9 @@ namespace block {
 		config.color[2] = 0.60f;
 		config.color[3] = 0.25f;
 
-		config.bgColor[0] = 0.50f;
+		config.bgColor[0] = 0.0f;
 		config.bgColor[1] = 0.0f;
-		config.bgColor[2] = 0.0f;
+		config.bgColor[2] = 0.1f;
 		config.bgColor[3] = 0.0f;
 
 		config.minVel = 1.0f;
@@ -28,26 +28,29 @@ namespace block {
 		config.maxSize = 1.25f;
 
 		config.area = 7.5f;
-		config.numBlocks = 200;
+		config.numBlocks = 500;
 	}
 
 	///////////////////////////////////////////////////////////////////////
 	void Init
 		( const CubeBackground::Config& config
 		, CubeBackground::Block& block
+		, bool initial
 		)
 	{
 		block.center[0] = utils::randf( -(config.area), config.area );
-		block.center[1] = config.area;
+		block.center[1] = (initial ? utils::randf( -(config.area), config.area ) : config.area );
 		block.center[2] = utils::randf( -5.0, 0.0f );
 
 		block.velocity = utils::randf( config.minVel, config.maxVel );
 
-		block.orientation[0] = block.orientation[1] = block.orientation[2] = 0.0f;
-
 		block.spin[0] = utils::randf( config.minSpin, config.maxSpin );
 		block.spin[1] = utils::randf( config.minSpin, config.maxSpin );
 		block.spin[2] = utils::randf( config.minSpin, config.maxSpin );
+
+		block.orientation[0] = utils::randf( 0.0f, 360.0f );
+		block.orientation[1] = utils::randf( 0.0f, 360.0f );
+		block.orientation[2] = utils::randf( 0.0f, 360.0f );
 
 		block.color[0] = config.color[0];
 		block.color[1] = config.color[1];
@@ -69,7 +72,7 @@ namespace block {
 		// check if still valid
 		if( block.center[1] < -(config.area) )
 		{
-			Init( config, block );
+			Init( config, block, false );
 			return;
 		}
 
@@ -175,7 +178,9 @@ CubeBackground::CubeBackground( void )
 
 	m_blocks.resize( m_config.numBlocks );
 	for( unsigned i=0; i < m_blocks.size(); i++ )
-		block::Init( m_config, m_blocks[i] );
+		block::Init( m_config, m_blocks[i], true );
+
+	glClearColor( m_config.bgColor[0], m_config.bgColor[1], m_config.bgColor[2], m_config.bgColor[3] );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,7 +205,7 @@ Worker::Status CubeBackground::FrameUpdate( float deltaTime )
 					4.0f / 3.0f,
 					4.0f,
 					40.0f   );
-#if 1
+#if 0
 	static float angle = utils::randf( 0.0f, 360.0f );
 
 	angle += deltaTime * 9.0f;

@@ -20,6 +20,25 @@ inline TimeValue TicksPerSec( void )         { return 1000000LL; };
 inline TimeValue TimeInSecs ( TimeValue tv ) { return (tv / TicksPerSec()); };
 inline TimeValue TimeInMSecs( TimeValue tv ) { return (tv % TicksPerSec()); };
 
+class Timer
+{
+	public:
+		Timer( void );
+		~Timer( void );
+
+		void Reset( void );
+		float Update( void );
+
+		float LastUpdate( void ) const { return m_deltaTime; }
+
+		float Uptime( void );
+
+	private:
+		float m_deltaTime;
+		TimeValue m_lastUpdateTime;
+		TimeValue m_lastResetTime;
+};
+
 } // namespace
 
 #endif /* UTILS_TIME_H */
