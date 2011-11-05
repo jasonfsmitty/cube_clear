@@ -9,6 +9,8 @@ SRCS = \
 	sdl.cpp \
 	background.cpp \
 	worker.cpp \
+	game.cpp \
+	board.cpp \
 	main.cpp
 
 #-----------------------------------------------------------------------

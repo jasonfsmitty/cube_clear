@@ -11,13 +11,19 @@ class CubeBackground : public Worker
 		CubeBackground( void );
 		~CubeBackground( void );
 
-		virtual Worker::Status FrameUpdate( float deltaTime );
+		virtual Worker::Status Update( float deltaTime );
+		virtual void Render( void );
 
-		virtual Worker::Status HandleEvent( const SDL_Event& event )
+		virtual Worker::Status Handle( const SDL_Event& event )
 			{ return Worker::Continue; }
 
 		virtual bool IsAlive( void )
 			{ return true; }
+
+		virtual void Pause( void )
+			{}
+
+		virtual void Resume( void );
 
 		struct Block
 		{
@@ -48,6 +54,7 @@ class CubeBackground : public Worker
 	private:
 		std::vector< Block > m_blocks;
 		Config m_config;
+		float m_angle;
 };
 
 #endif /* BACKGROUND_H */

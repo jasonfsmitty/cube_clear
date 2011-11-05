@@ -4,6 +4,7 @@
 
 #include "background.h"
 #include "defines.h"
+#include "log.h"
 
 namespace block {
 
@@ -173,14 +174,14 @@ namespace block {
 CubeBackground::CubeBackground( void )
 	: m_blocks()
 	, m_config()
+	, m_angle( 0.0f )
 {
 	block::Config( m_config );
+	m_angle = utils::randf( 0.0f, 360.0f );
 
 	m_blocks.resize( m_config.numBlocks );
 	for( unsigned i=0; i < m_blocks.size(); i++ )
 		block::Init( m_config, m_blocks[i], true );
-
-	glClearColor( m_config.bgColor[0], m_config.bgColor[1], m_config.bgColor[2], m_config.bgColor[3] );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -190,7 +191,25 @@ CubeBackground::~CubeBackground( void )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-Worker::Status CubeBackground::FrameUpdate( float deltaTime )
+void CubeBackground::Resume( void )
+{
+	glClearColor( m_config.bgColor[0], m_config.bgColor[1], m_config.bgColor[2], m_config.bgColor[3] );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+Worker::Status CubeBackground::Update( float deltaTime )
+{
+	logDebug( "Updating cube background: deltaTime=%1.3f", deltaTime );
+
+	for( unsigned i=0; i < m_blocks.size(); ++i )
+		block::Update( m_config, m_blocks[i], deltaTime );
+
+	m_angle += deltaTime * 9.0f;
+	return Worker::Continue;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void CubeBackground::Render( void )
 {
 	glPushAttrib( GL_COLOR_BUFFER_BIT );
 	glEnable( GL_BLEND );
@@ -206,14 +225,10 @@ Worker::Status CubeBackground::FrameUpdate( float deltaTime )
 					4.0f,
 					40.0f   );
 #if 1
-	static float angle = utils::randf( 0.0f, 360.0f );
-
-	angle += deltaTime * 9.0f;
-
 	// setup the viewing matrix...
 	gluLookAt( 0.0f, 0.0f, 7.0f,  // eye
 		       0.0f, 0.0f, 0.0f,   // center
-			   cos(angle * 3.14f/180.0f), sin(angle*3.14f/180.0f), 0.0f ); // up
+			   cos(m_angle * 3.14f/180.0f), sin(m_angle*3.14f/180.0f), 0.0f ); // up
 #else
 	// setup the viewing matrix...
 	gluLookAt( 0.0f, 0.0f, 10.0f,  // eye
@@ -225,11 +240,7 @@ Worker::Status CubeBackground::FrameUpdate( float deltaTime )
 	glBindTexture( GL_TEXTURE_2D, 0 );
 
 	for( unsigned i=0; i < m_blocks.size(); ++i )
-	{
-		Block& block = m_blocks[i];
-		block::Update( m_config, block, deltaTime );
-		block::Draw( block );
-	}
+		block::Draw( m_blocks[i] );
 
 	glMatrixMode( GL_PROJECTION );
 	glPopMatrix();
@@ -237,7 +248,5 @@ Worker::Status CubeBackground::FrameUpdate( float deltaTime )
 	glPopMatrix();
 
 	glPopAttrib();
-
-	return Worker::Continue;
 }
 

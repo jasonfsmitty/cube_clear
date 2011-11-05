@@ -7,9 +7,13 @@
 #include "title.h"
 #include "time.h"
 
+#include <cstdlib>
+
 int main( int argc, char* argv[] )
 {
 	logInfo( "Initializing ..." );
+
+	srand( (unsigned int) utils::GetRealTime() );
 
 	Sdl sdl;
 	SdlDisplay display( sdl );
@@ -24,6 +28,7 @@ int main( int argc, char* argv[] )
 
 	MassWorker root;
 	root.Insert( new TitleScreen() );
+	root.Resume();
 
 	utils::Timer timer;
 	while( root.IsAlive() && (timer.Uptime() < 20.0f) )
@@ -32,9 +37,12 @@ int main( int argc, char* argv[] )
 
 		SDL_Event event;
 		while( SDL_PollEvent( &event ) )
-			root.HandleEvent( event );
+			root.Handle( event );
 
-		root.FrameUpdate( deltaTime );
+		root.Update( deltaTime );
+
+		glClear( GL_COLOR_BUFFER_BIT );
+		root.Render();
 		SDL_GL_SwapBuffers();
 
 		root.Cleanup( /*force=*/ false );

@@ -51,7 +51,33 @@ void MassWorker::Cleanup( bool force )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-Worker::Status MassWorker::FrameUpdate( float deltaTime )
+Worker::Status MassWorker::Update( float deltaTime )
+{
+	std::list< WorkerInfo >::iterator iter;
+
+	for( iter = m_workers.begin(); iter != m_workers.end(); iter++ )
+	{
+		WorkerInfo& info = *iter;
+
+		if( info.IsAlive() )
+		{
+			if( Worker::Continue != info.worker->Update( deltaTime ) )
+			{
+				info.Kill();
+				m_dirty = true;
+			}
+		}
+		else if( ! m_dirty )
+		{
+			m_dirty = true;
+		}
+	}
+
+	return Worker::Continue;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+Worker::Status MassWorker::Handle( const SDL_Event& event )
 {
 	std::list< WorkerInfo >::iterator iter;
 
@@ -64,7 +90,7 @@ Worker::Status MassWorker::FrameUpdate( float deltaTime )
 			continue;
 		}
 
-		Worker::Status status = info.worker->FrameUpdate( deltaTime );
+		Worker::Status status = info.worker->Handle( event );
 		if( status != Worker::Continue )
 		{
 			info.Kill();
@@ -76,29 +102,43 @@ Worker::Status MassWorker::FrameUpdate( float deltaTime )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-Worker::Status MassWorker::HandleEvent( const SDL_Event& event )
+void MassWorker::Render( void )
 {
 	std::list< WorkerInfo >::iterator iter;
-
 	for( iter = m_workers.begin(); iter != m_workers.end(); iter++ )
 	{
 		WorkerInfo& info = *iter;
-		if( ! info.IsAlive() )
-		{
-			m_dirty = true;
-			continue;
-		}
-
-		Worker::Status status = info.worker->HandleEvent( event );
-		if( status != Worker::Continue )
-		{
-			info.Kill();
-			m_dirty = true;
-		}
+		if( info.IsAlive() )
+			info.worker->Render();
 	}
-
-	return Worker::Continue;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+void MassWorker::Pause( void )
+{
+	std::list< WorkerInfo >::iterator iter;
+	for( iter = m_workers.begin(); iter != m_workers.end(); iter++ )
+	{
+		WorkerInfo& info = *iter;
+		if( info.IsAlive() )
+			info.worker->Pause();
+		else
+			m_dirty = true;
+	}
+}
 
+///////////////////////////////////////////////////////////////////////////////
+void MassWorker::Resume( void )
+{
+	std::list< WorkerInfo >::iterator iter;
+	for( iter = m_workers.begin(); iter != m_workers.end(); iter++ )
+	{
+		WorkerInfo& info = *iter;
+		if( info.IsAlive() )
+			info.worker->Resume();
+		else
+			m_dirty = true;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////

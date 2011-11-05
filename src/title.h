@@ -22,15 +22,18 @@ class TitleScreen : public Worker
 			// nothing
 		}
 
-		virtual Worker::Status FrameUpdate( float deltaTime )
+		virtual Worker::Status Update( float deltaTime )
 		{
 			m_uptime += deltaTime;
-
-			glClear( GL_COLOR_BUFFER_BIT );
-			return m_cubes.FrameUpdate( deltaTime );
+			return m_cubes.Update( deltaTime );
 		}
 
-		virtual Worker::Status HandleEvent( const SDL_Event& event )
+		virtual void Render( void )
+		{
+			m_cubes.Render();
+		}
+
+		virtual Worker::Status Handle( const SDL_Event& event )
 		{
 			switch( event.type )
 			{
@@ -52,6 +55,16 @@ class TitleScreen : public Worker
 		}
 
 		virtual bool IsAlive( void ) { return m_alive; }
+
+		virtual void Pause( void )
+		{
+			m_cubes.Pause();
+		}
+
+		virtual void Resume( void )
+		{
+			m_cubes.Resume();
+		}
 
 	private:
 
