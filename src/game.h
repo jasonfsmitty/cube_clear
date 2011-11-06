@@ -19,6 +19,8 @@ class Game : public Worker
 		virtual void Pause( void );
 		virtual void Resume( void );
 
+		void Reset( void );
+
 	private:
 
 		Worker& m_background;

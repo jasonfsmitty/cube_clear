@@ -1,5 +1,6 @@
 #include "game.h"
 #include "event.h"
+#include "log.h"
 
 namespace {
 
@@ -51,6 +52,14 @@ Game::~Game( void )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+void Game::Reset( void )
+{
+	logInfo( "Resetting game to defaults" );
+	m_alive = true;
+	m_board.Reset();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 Worker::Status Game::Update( float deltaTime )
 {
 	m_background.Update( deltaTime );
@@ -66,6 +75,7 @@ Worker::Status Game::Handle( const SDL_Event& event )
 	{
 		case SDL_QUIT:
 			m_alive = false;
+			logInfo( "Game received QUIT event" );
 			return Worker::Exit;
 
 		case SDL_KEYDOWN:
@@ -76,11 +86,22 @@ Worker::Status Game::Handle( const SDL_Event& event )
 				case SDLK_RETURN:
 					SendEnter( m_board );
 					break;
+				case SDLK_UP:
+					SendUp( m_board );
+					break;
+				case SDLK_DOWN:
+					SendDown( m_board );
+					break;
+				case SDLK_LEFT:
+					SendLeft( m_board );
+					break;
+				case SDLK_RIGHT:
+					SendRight( m_board );
+					break;
 
-				case SDLK_UP:    SendUp( m_board ); break;
-				case SDLK_DOWN:  SendDown( m_board ); break;
-				case SDLK_LEFT:  SendLeft( m_board ); break;
-				case SDLK_RIGHT: SendRight( m_board ); break;
+				case SDLK_ESCAPE:
+					logInfo( "Exiting from game due to user key press" );
+					return Worker::Exit;
 
 				default:
 					break;

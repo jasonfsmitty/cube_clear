@@ -4,19 +4,26 @@
 #include "worker.h"
 #include <vector>
 
-struct Cursor 
+struct Point 
 {
 	int x;
 	int y;
 
-	Cursor( int _x, int _y ) : x(_x), y(_y) {}
-	Cursor( const Cursor& p ) : x(p.x), y(p.y) {}
+	Point( int _x, int _y ) : x(_x), y(_y) {}
+	Point( const Point& p ) : x(p.x), y(p.y) {}
+	Point( void ) : x(0), y(0) {}
 
-	Cursor& operator=( const Cursor& p )
+	Point& operator=( const Point& p )
 		{ x=p.x; y=p.y; return *this; }
 
-	bool operator==( const Cursor& p )
+	bool operator==( const Point& p )
 		{ return (x==p.x) && (y==p.y); }
+
+	Point dx( int change )
+		{ return Point( x+change, y ); }
+
+	Point dy( int change )
+		{ return Point( x, y+change ); }
 };
 
 struct Gem
@@ -83,6 +90,8 @@ class Board : public Worker
 		Board( int size, int numTypes );
 		~Board( void );
 
+		void Reset( void );
+
 		virtual Status Update( float deltaTime );
 		virtual Status Handle( const SDL_Event& event );
 		virtual void Render( void );
@@ -114,7 +123,7 @@ class Board : public Worker
 
 		State m_state;
 		std::vector< Gem* > m_gems;
-		Cursor m_cursor;
+		Point m_cursor;
 
 		bool m_alive;
 };

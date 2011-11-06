@@ -31,7 +31,7 @@ int main( int argc, char* argv[] )
 	root.Resume();
 
 	utils::Timer timer;
-	while( root.IsAlive() && (timer.Uptime() < 20.0f) )
+	while( root.IsAlive() )
 	{
 		const float deltaTime = timer.Update();
 

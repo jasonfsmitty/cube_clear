@@ -3,6 +3,7 @@
 
 #include "worker.h"
 #include "background.h"
+#include "game.h"
 
 #include <GL/gl.h>
 
@@ -12,9 +13,11 @@ class TitleScreen : public Worker
 		TitleScreen( void )
 			: m_uptime( 0.0f )
 			, m_alive( true )
+			, m_state( TITLE )
 			, m_cubes()
+			, m_game( m_cubes )
 		{
-			// nothing
+			GotoTitleState();
 		}
 
 		~TitleScreen( void )
@@ -22,18 +25,50 @@ class TitleScreen : public Worker
 			// nothing
 		}
 
+		void GotoTitleState( void )
+		{
+			m_state = TITLE;
+			m_game.Reset();
+		}
+
+		void GotoGameState( void )
+		{
+			m_state = GAME;
+			m_game.Resume();
+		}
+
 		virtual Worker::Status Update( float deltaTime )
 		{
 			m_uptime += deltaTime;
-			return m_cubes.Update( deltaTime );
+			switch( m_state )
+			{
+				case TITLE:
+					m_cubes.Update( deltaTime );
+					break;
+
+				case GAME:
+					if( Worker::Continue != m_game.Update( deltaTime ) )
+						GotoTitleState();
+					break;
+			}
+			return Worker::Continue;
 		}
 
 		virtual void Render( void )
 		{
-			m_cubes.Render();
+			switch( m_state )
+			{
+				case TITLE:
+					m_cubes.Render();
+					break;
+
+				case GAME:
+					m_game.Render();
+					break;
+			}
 		}
 
-		virtual Worker::Status Handle( const SDL_Event& event )
+		Worker::Status HandleTitleEvent( const SDL_Event& event )
 		{
 			switch( event.type )
 			{
@@ -42,11 +77,21 @@ class TitleScreen : public Worker
 					return Worker::Exit;
 
 				case SDL_KEYDOWN:
-					if( event.key.keysym.sym == SDLK_ESCAPE )
+					switch( event.key.keysym.sym )
 					{
-						m_alive = false;
-						return Worker::Exit;
+						case SDLK_RETURN:
+						case SDLK_KP_ENTER:
+							GotoGameState();
+							return Worker::Continue;
+
+						case SDLK_ESCAPE:
+							m_alive = false;
+							return Worker::Exit;
+
+						default:
+							break;
 					}
+					break;
 
 				default:
 					break;
@@ -54,23 +99,70 @@ class TitleScreen : public Worker
 			return Worker::Continue;
 		}
 
+		Worker::Status HandleGameEvent( const SDL_Event& event )
+		{
+			if( Worker::Continue != m_game.Handle( event ) )
+				GotoTitleState();
+
+			return Worker::Continue;
+		}
+
+		virtual Worker::Status Handle( const SDL_Event& event )
+		{
+			switch( m_state )
+			{
+				case TITLE:
+					return HandleTitleEvent( event );
+
+				case GAME:
+					return HandleGameEvent( event );
+			}
+
+			return Worker::Exit;
+		}
+
 		virtual bool IsAlive( void ) { return m_alive; }
 
 		virtual void Pause( void )
 		{
-			m_cubes.Pause();
+			switch( m_state )
+			{
+				case TITLE:
+					m_cubes.Pause();
+					break;
+				case GAME:
+					m_game.Pause();
+					break;
+			}
 		}
 
 		virtual void Resume( void )
 		{
-			m_cubes.Resume();
+			switch( m_state )
+			{
+				case TITLE:
+					m_cubes.Resume();
+					break;
+				case GAME:
+					m_game.Resume();
+					break;
+			}
 		}
 
 	private:
 
+		enum State
+		{
+			TITLE,
+			GAME,
+		};
+
 		float m_uptime;
 		bool m_alive;
+		State m_state;
+
 		CubeBackground m_cubes;
+		Game m_game;
 };
 
 #endif /* GAME_TITLE_H */
