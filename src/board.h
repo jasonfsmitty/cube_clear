@@ -157,6 +157,7 @@ class Board : public Worker
 		bool CheckForMatches( void );
 		bool CheckForOneWayMatches( bool flipped );
 		void MarkFalling( void );
+		bool FillCleared( void );
 
 		void GotoIdleState( void );
 		void GotoSelectedState( void );

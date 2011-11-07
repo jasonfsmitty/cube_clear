@@ -352,6 +352,35 @@ void Board::MarkFalling( void )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+bool Board::FillCleared( void )
+{
+	bool inserted = false;
+	Point p;
+
+	for( p.x = 0; p.x < m_size; p.x++ )
+	{
+		int start = -1;
+		for( p.y = 0; p.y < m_size; p.y++ )
+		{
+			Gem* gem = get_gem( p );
+			if( gem )
+				continue;
+
+			if( start < 0 )
+				start = p.y;
+
+			gem = NewGem( m_numTypes );
+
+			gem->Drop( m_size - start );
+			set_gem( p, gem );
+			inserted = true;
+		}
+	}
+
+	return inserted;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 Worker::Status Board::Update( float deltaTime )
 {
 	const float swapRate = 4.0f;
@@ -464,6 +493,7 @@ Worker::Status Board::Update( float deltaTime )
 			if( ! clearing )
 			{
 				MarkFalling();
+				FillCleared();
 				GotoFallingState();
 			}
 			break;
