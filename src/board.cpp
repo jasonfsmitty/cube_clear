@@ -470,7 +470,12 @@ Worker::Status Board::Update( float deltaTime )
 
 		case FALLING:
 			if( ! falling )
-				GotoIdleState();
+			{
+				if( CheckForMatches() )
+					GotoClearingState();
+				else
+					GotoIdleState();
+			}
 			break;
 	}
 
