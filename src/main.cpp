@@ -11,6 +11,7 @@
 
 int main( int argc, char* argv[] )
 {
+	utils::logLevel( LOG_DEBUG );
 	logInfo( "Initializing ..." );
 
 	srand( (unsigned int) utils::GetRealTime() );

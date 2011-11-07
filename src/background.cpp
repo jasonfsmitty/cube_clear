@@ -199,8 +199,6 @@ void CubeBackground::Resume( void )
 ///////////////////////////////////////////////////////////////////////////////
 Worker::Status CubeBackground::Update( float deltaTime )
 {
-	logDebug( "Updating cube background: deltaTime=%1.3f", deltaTime );
-
 	for( unsigned i=0; i < m_blocks.size(); ++i )
 		block::Update( m_config, m_blocks[i], deltaTime );
 

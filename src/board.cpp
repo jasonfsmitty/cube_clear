@@ -20,12 +20,12 @@ namespace {
 		{ return ( p.y * ( size ) ) + p.x; }
 
 	Point FromIndex( int size, int i )
-		{ return Point( (i % (size)), i / (size) ); }
+		{ return Point( i % size, i / size ); }
 
 	Gem* NewGem( const int numTypes )
 	{
 		Gem* gem = new Gem();
-		gem->type = rand() % (numTypes + 1);
+		gem->type = rand() % (numTypes);
 		return gem;
 	}
 
@@ -130,7 +130,8 @@ namespace {
 					alpha = gem->clear;
 					break;
 
-				case Gem::SWAPPING:
+				case Gem::SWAP_HORIZ:
+				case Gem::SWAP_VERT:
 					x += gem->dx;
 					y += gem->dy;
 					break;
@@ -148,13 +149,13 @@ namespace {
 		}
 	}
 
-	void DrawCursor( bool pressed, int x, int y )
+	void DrawCursor( bool pressed, const Point& point )
 	{
 		const float length( pressed ? 1.0f : 0.25f );
 		const float alpha ( pressed ? 1.0f : 0.50f );
 
 		glPushMatrix();
-		glTranslatef( float(x), float(y), 0.0f );
+		glTranslatef( float(point.x), float(point.y), 0.0f );
 
 		glBindTexture( GL_TEXTURE_2D, 0 );
 		glLineWidth( 5.0 );
@@ -220,34 +221,256 @@ void Board::Reset( void )
 		m_gems[i] = NewGem( m_numTypes );
 	}
 
-	m_state = IDLE;
 	m_cursor.x = m_size/2;
 	m_cursor.y = m_size/2;
+
+	GotoSwappingState(); // this will force an initial check for matches
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Board::GotoIdleState( void )
+{
+	m_state = IDLE;
+	logDebug( "board.state == IDLE" );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Board::GotoSelectedState( void )
+{
+	m_state = SELECTED;
+	logDebug( "board.state == SELECTED with cursor=%s", m_cursor.str().c_str() );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Board::GotoSwappingState( void )
+{
+	m_state = SWAPPING;
+	logDebug( "board.state == SWAPPING" );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Board::GotoClearingState( void )
+{
+	m_state = CLEARING;
+	logDebug( "board.state == CLEARING" );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Board::GotoFallingState( void )
+{
+	m_state = FALLING;
+	logDebug( "board.state == FALLING" );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool Board::CheckForOneWayMatches( bool flipped )
+{
+	const int numForClear = 3;
+	bool foundClearing = false;
+
+	// check each row
+	for( int row = 0; row < m_size; row++ )
+	{
+		int type = -1;
+		int count = 0;
+
+		for( int col = 0; col < m_size; ++col )
+		{
+			Gem* g = get_gem( FlipPoint( col, row, flipped ) );
+
+			if( ! g )
+			{
+				// no block, reset
+				type = -1;
+				count = 0;
+			}
+			else if( g->type != type )
+			{
+				type = g->type;
+				count = 1;
+			}
+			else
+			{
+				if( ++count == numForClear )
+				{
+					foundClearing = true;
+					for( int i=(col-count+1); i <= col; i++ )
+						get_gem( FlipPoint( i, row, flipped ) )->Clear();
+				}
+				else if( count > numForClear )
+				{
+					g->Clear();
+				}
+				else
+				{
+					// not enough for clear, do nothing
+				}
+			}
+		}
+	}
+
+	return foundClearing;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool Board::CheckForMatches( void )
+{
+	bool horizontal = CheckForOneWayMatches( false );
+	bool vertical   = CheckForOneWayMatches( true );
+	return horizontal || vertical;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Board::MarkFalling( void )
+{
+	bool falling = false;
+
+	Point p;
+	for( p.x = 0; p.x < m_size; p.x++ )
+	{
+		int shift = 0;
+		for( p.y = 0; p.y < m_size; p.y++ )
+		{
+			Gem* gem = get_gem( p );
+
+			if( ! gem )
+				shift++;
+			else if( shift )
+			{
+				set_gem( p, NULL );
+				set_gem( p.dy( -shift ), gem );
+				gem->Drop( shift );
+				falling = true;
+			}
+		}
+	}
+
+	if( falling )
+		GotoFallingState();
+	else
+		GotoIdleState();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 Worker::Status Board::Update( float deltaTime )
 {
+	const float swapRate = 4.0f;
+	const float fallRate = 4.0f;
+	const float clearRate = 4.0f;
+
+	bool clearing = false;
+	bool swapping = false;
+	bool falling  = false;
+
+	for( unsigned i = 0; i < m_gems.size(); i++ )
+	{
+		Gem* gem = m_gems[i];
+		if( ! gem )
+			continue;
+
+		switch( gem->state )
+		{
+			case Gem::IDLE:
+				// nothing
+				break;
+
+			case Gem::SWAP_HORIZ:
+				if( gem->dx > 0.0f )
+				{
+					gem->dx -= (deltaTime * swapRate);
+					if( gem->dx <= 0.0f )
+						gem->Idle();
+					else
+						swapping = true;
+				}
+				else if( gem->dx < 0.0f )
+				{
+					gem->dx += (deltaTime * swapRate);
+					if( gem->dx >= 0.0f )
+						gem->Idle();
+					else
+						swapping = true;
+				}
+				else
+				{
+					logError( "gem[%p]: invalid dx value for swapping horiz, marking idle", gem );
+					gem->Idle();
+				}
+				break;
+
+			case Gem::SWAP_VERT:
+				if( gem->dy > 0.0f )
+				{
+					gem->dy -= (deltaTime * swapRate);
+					if( gem->dy <= 0.0f )
+						gem->Idle();
+					else
+						swapping = true;
+				}
+				else if( gem->dy < 0.0f )
+				{
+					gem->dy += (deltaTime * swapRate);
+					if( gem->dy >= 0.0f )
+						gem->Idle();
+					else
+						swapping = true;
+				}
+				else
+				{
+					logError( "gem[%p]: invalid dy value for swapping vert, marking idle", gem );
+					gem->Idle();
+				}
+				break;
+
+			case Gem::CLEARING:
+				gem->clear -= (deltaTime * clearRate);
+				if( gem->clear <= 0.0f )
+				{
+					m_gems[i] = NULL;
+					DeleteGem( gem );
+				}
+				else
+					clearing = true;
+				break;
+
+			case Gem::FALLING:
+				gem->dy -= ( deltaTime * fallRate );
+				if( gem->dy <= 0.0f )
+					gem->Idle();
+				else
+					falling = true;
+				break;
+		}
+	}
+
 	switch( m_state )
 	{
 		case IDLE:
-			// nothing
-			break;
-
 		case SELECTED:
 			// nothing
 			break;
 
 		case SWAPPING:
-			// TODO
+			if( ! swapping )
+			{
+				if( CheckForMatches() )
+					GotoClearingState();
+				else
+					GotoIdleState();
+			}
 			break;
 
 		case CLEARING:
-			// TODO
+			if( ! clearing )
+			{
+				MarkFalling();
+				GotoFallingState();
+			}
 			break;
 
 		case FALLING:
-			// TODO
+			if( ! falling )
+				GotoIdleState();
 			break;
 	}
 
@@ -272,7 +495,7 @@ Worker::Status Board::Handle( const SDL_Event& event )
 					if( IsValid( m_size, m_cursor.dy(1) ) )
 					{
 						++(m_cursor.y);
-						logDebug( "move cursor up" );
+						logDebug( "move cursor up: %s", m_cursor.str().c_str() );
 					}
 					break;
 
@@ -280,7 +503,7 @@ Worker::Status Board::Handle( const SDL_Event& event )
 					if( IsValid( m_size, m_cursor.dy(-1) ) )
 					{
 						--(m_cursor.y);
-						logDebug( "move cursor down" );
+						logDebug( "move cursor down: %s", m_cursor.str().c_str() );
 					}
 					break;
 
@@ -288,7 +511,7 @@ Worker::Status Board::Handle( const SDL_Event& event )
 					if( IsValid( m_size, m_cursor.dx(1) ) )
 					{
 						++(m_cursor.x);
-						logDebug( "move cursor right" );
+						logDebug( "move cursor right: %s", m_cursor.str().c_str() );
 					}
 					break;
 
@@ -296,13 +519,12 @@ Worker::Status Board::Handle( const SDL_Event& event )
 					if( IsValid( m_size, m_cursor.dx(-1) ) )
 					{
 						--(m_cursor.x);
-						logDebug( "move cursor left" );
+						logDebug( "move cursor left: %s", m_cursor.str().c_str() );
 					}
 					break;
 
 				case event::Board::ENTER:
-					m_state = SELECTED;
-					logDebug( "cursor SELECT" );
+					GotoSelectedState();
 					break;
 			}
 			break;
@@ -311,23 +533,23 @@ Worker::Status Board::Handle( const SDL_Event& event )
 			switch( board->input )
 			{
 				case event::Board::UP:
-					Swap( m_cursor.x, m_cursor.y, m_cursor.x, m_cursor.y+1 );
+					Swap( m_cursor, m_cursor.dy(1) );
 					break;
 
 				case event::Board::DOWN:
-					Swap( m_cursor.x, m_cursor.y, m_cursor.x, m_cursor.y-1 );
+					Swap( m_cursor, m_cursor.dy(-1) );
 					break;
 
 				case event::Board::LEFT:
-					Swap( m_cursor.x, m_cursor.y, m_cursor.x-1, m_cursor.y );
+					Swap( m_cursor, m_cursor.dx(-1) );
 					break;
 
 				case event::Board::RIGHT:
-					Swap( m_cursor.x, m_cursor.y, m_cursor.x+1, m_cursor.y );
+					Swap( m_cursor, m_cursor.dx(1) );
 					break;
 
 				case event::Board::ENTER:
-					m_state = IDLE;
+					GotoIdleState();
 					break;
 			}
 			break;
@@ -349,20 +571,23 @@ Worker::Status Board::Handle( const SDL_Event& event )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void Board::Swap( int x1, int y1, int x2, int y2 )
+void Board::Swap( const Point& p1, const Point& p2 )
 {
-	Gem* left = gem( x1, y1 );
-	Gem* right = gem( x2, y2 );
+	Gem* left = get_gem( p1 );
+	Gem* right = get_gem( p2 );
 
 	if( !left || !right )
 		return;
 
-	m_state = SWAPPING;
+	logDebug( "Swapping gems: p1=%s p2=%s", p1.str().c_str(), p2.str().c_str() );
 
-	set_gem( x1, y1, right );
-	set_gem( x2, y2, left );
-	left->Move( x1 - x2, y1 - y2 );
-	right->Move( x2 - x1, y2 - y1 );
+	set_gem( p1, right );
+	set_gem( p2, left );
+
+	left->Swap( p1 - p2 );
+	right->Swap( p2 - p1 );
+
+	GotoSwappingState();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -397,9 +622,9 @@ void Board::Render( void )
 		DrawField( m_gems, m_size );
 
 		if( m_state == IDLE )
-			DrawCursor( false, m_cursor.x, m_cursor.y );
+			DrawCursor( false, m_cursor );
 		else if( m_state == SELECTED )
-			DrawCursor( true, m_cursor.x, m_cursor.y );
+			DrawCursor( true, m_cursor );
 
 	glPopMatrix();
 
@@ -422,20 +647,19 @@ void Board::Resume( void )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-Gem* Board::gem( int x, int y )
+Gem* Board::get_gem( const Point& p )
 {
-	if( x < 1 || x > m_size ) return NULL;
-	if( y < 1 || y > m_size ) return NULL;
-
-	return m_gems[ y * (m_size+1) + x ];
+	if( ! IsValid( m_size, p ) )
+		return NULL;
+	return m_gems[ ToIndex( m_size, p ) ];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void Board::set_gem( int x, int y, Gem* gem )
+void Board::set_gem( const Point& p, Gem* gem )
 {
-	ASSERT( x > 0 && x <= m_size );
-	ASSERT( y > 0 && y <= m_size );
+	ASSERT( IsValid( m_size, p.x ) );
+	ASSERT( IsValid( m_size, p.y ) );
 
-	m_gems[ y * (m_size+1) + x ] = gem;
+	m_gems[ ToIndex( m_size, p ) ] = gem;
 }
 

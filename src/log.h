@@ -10,6 +10,8 @@ namespace utils {
 bool logOpen( const std::string& filename );
 void logClose( void );
 
+void logLevel( int level );
+
 void logFlush( void );
 
 void _Log( int level, const char* file, int line, const char* func, const char* fmt, ... ) __attribute__ ((format (printf, 5, 6 ) ));
