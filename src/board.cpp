@@ -34,6 +34,8 @@ namespace {
 		if( gem )
 			delete gem;
 	}
+
+#if 0
 	void DrawSquare( float size, float x, float y )
 	{
 		glPushMatrix();
@@ -46,8 +48,9 @@ namespace {
 		glEnd();
 		glPopMatrix();
 	}
+#endif
 
-	void DrawGem( float x, float y )
+	void DrawGem( float x, float y, float rotation, float scale )
 	{
 		static const float size = 0.80f;
 		static const float margin = (1.0f - size) / 2.0f;
@@ -55,6 +58,8 @@ namespace {
 
 		glPushMatrix();
 		glTranslatef( x, y, 0.0f );
+		glRotatef( rotation, 0.0f, 0.0f, 1.0f );
+		// glScalef( ... ); TODO
 		glBegin( GL_TRIANGLE_STRIP );
 			glTexCoord2i( 0, 0 );  glVertex2f( margin, margin );
 			glTexCoord2i( 1, 0 );  glVertex2f( width,  margin );
@@ -119,6 +124,8 @@ namespace {
 			float x( point.x );
 			float y( point.y );
 			float alpha = 1.0f;
+			float spin = 0.0f;
+			float scale = 1.0f;
 
 			switch( gem->state )
 			{
@@ -128,6 +135,8 @@ namespace {
 
 				case Gem::CLEARING:
 					alpha = gem->clear;
+					scale = gem->clear;
+					spin = 360.0f * gem->clear;
 					break;
 
 				case Gem::SWAP_HORIZ:
@@ -145,7 +154,7 @@ namespace {
 			glColor4fv( colors[ gem->type ] );
 
 			// Finally draw the gem ...
-			DrawGem( x, y );
+			DrawGem( x, y, spin, scale );
 		}
 	}
 
