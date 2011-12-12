@@ -57,8 +57,9 @@ namespace {
 		static const float width = 1.0f - margin;
 
 		glPushMatrix();
-		glTranslatef( x, y, 0.0f );
+		glTranslatef( x+0.5f, y+0.5f, 0.0f );
 		glRotatef( rotation, 0.0f, 0.0f, 1.0f );
+		glTranslatef( -0.5, -0.5, 0.0f );
 		// glScalef( ... ); TODO
 		glBegin( GL_TRIANGLE_STRIP );
 			glTexCoord2i( 0, 0 );  glVertex2f( margin, margin );
