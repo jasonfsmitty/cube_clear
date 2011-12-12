@@ -225,6 +225,10 @@ void Board::Reset( void )
 	m_cursor.y = m_size/2;
 
 	GotoSwappingState(); // this will force an initial check for matches
+	while( ! m_state == IDLE )
+	{
+		Update( 1000.0f );
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
