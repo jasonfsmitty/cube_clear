@@ -58,9 +58,9 @@ namespace {
 
 		glPushMatrix();
 		glTranslatef( x+0.5f, y+0.5f, 0.0f );
+		glScalef( scale, scale, 0.0f );
 		glRotatef( rotation, 0.0f, 0.0f, 1.0f );
 		glTranslatef( -0.5, -0.5, 0.0f );
-		// glScalef( ... ); TODO
 		glBegin( GL_TRIANGLE_STRIP );
 			glTexCoord2i( 0, 0 );  glVertex2f( margin, margin );
 			glTexCoord2i( 1, 0 );  glVertex2f( width,  margin );
@@ -136,8 +136,8 @@ namespace {
 
 				case Gem::CLEARING:
 					alpha = gem->clear;
-					scale = gem->clear;
-					spin = 360.0f * gem->clear;
+					scale = gem->clear * gem->clear;
+					spin = 100.0f * gem->clear;
 					break;
 
 				case Gem::SWAP_HORIZ:
