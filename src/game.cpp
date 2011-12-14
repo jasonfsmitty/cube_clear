@@ -4,8 +4,8 @@
 
 namespace {
 
-	const unsigned GAME_SIZE = 7;
-	const unsigned NUM_GEM_TYPES = 5;
+	const unsigned GAME_SIZE = 8;
+	const unsigned NUM_GEM_TYPES = 7;
 
 	void SendBoardEvent( Worker& worker, event::Board::Input input )
 	{
