@@ -4,6 +4,7 @@
 #include "worker.h"
 #include "background.h"
 #include "game.h"
+#include "font.h"
 
 #include <GL/gl.h>
 
@@ -16,8 +17,10 @@ class TitleScreen : public Worker
 			, m_state( TITLE )
 			, m_cubes()
 			, m_game( m_cubes )
+			, m_font()
 		{
 			GotoTitleState();
+			m_font.Load( "VeraBd.ttf", 10 );
 		}
 
 		~TitleScreen( void )
@@ -59,13 +62,23 @@ class TitleScreen : public Worker
 			switch( m_state )
 			{
 				case TITLE:
-					m_cubes.Render();
+					RenderTitle();
 					break;
 
 				case GAME:
 					m_game.Render();
 					break;
 			}
+		}
+
+		void RenderTitle( void )
+		{
+			m_cubes.Render();
+
+			GlLayout layout( m_font, 10, 10 );
+			GlPrinter printer( m_font );
+			glColor4f( 1.0f, 1.0f, 1.0f, 0.8f );
+			printer.Print( 1, 1, "Gems v0.1" );
 		}
 
 		Worker::Status HandleTitleEvent( const SDL_Event& event )
@@ -163,6 +176,7 @@ class TitleScreen : public Worker
 
 		CubeBackground m_cubes;
 		Game m_game;
+		GlFont m_font;
 };
 
 #endif /* GAME_TITLE_H */

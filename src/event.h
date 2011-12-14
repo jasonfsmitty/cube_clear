@@ -6,6 +6,7 @@ namespace event {
 	enum Type
 	{
 		EVT_BOARD,
+		EVT_SCORING,
 	};
 
 	struct Board
@@ -14,6 +15,7 @@ namespace event {
 
 		Input input;
 	};
+
 }
 
 #endif /* GAME_EVENT_H */

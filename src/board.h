@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include "log.h"
+#include "score.h"
 
 struct Point 
 {
@@ -173,6 +174,7 @@ class Board : public Worker
 		Point m_cursor;
 
 		bool m_alive;
+		Score m_score;
 };
 
 #endif /* GAME_BOARD_H */

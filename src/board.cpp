@@ -209,6 +209,7 @@ Board::Board( int size, int numTypes )
 	, m_gems( (size)*(size), NULL )
 	, m_cursor( size/2, size/2 )
 	, m_alive( true )
+	, m_score()
 {
 	// nothing
 }
@@ -239,12 +240,14 @@ void Board::Reset( void )
 	{
 		Update( 1000.0f );
 	}
+	m_score.Reset();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void Board::GotoIdleState( void )
 {
 	m_state = IDLE;
+	m_score.MarkIdle();
 	logDebug( "board.state == IDLE" );
 }
 
@@ -288,6 +291,9 @@ bool Board::CheckForOneWayMatches( bool flipped )
 		int type = -1;
 		int count = 0;
 
+		// will auto-flush as it goes out of scope
+		ScoreKeeper scoreKeeper( m_score );
+
 		for( int col = 0; col < m_size; ++col )
 		{
 			Gem* g = get_gem( FlipPoint( col, row, flipped ) );
@@ -297,6 +303,7 @@ bool Board::CheckForOneWayMatches( bool flipped )
 				// no block, reset
 				type = -1;
 				count = 0;
+				scoreKeeper.Flush();
 			}
 			else if( g->type != type )
 			{
@@ -309,11 +316,16 @@ bool Board::CheckForOneWayMatches( bool flipped )
 				{
 					foundClearing = true;
 					for( int i=(col-count+1); i <= col; i++ )
-						get_gem( FlipPoint( i, row, flipped ) )->Clear();
+					{
+						Gem* tmp = get_gem( FlipPoint( i, row, flipped ) );
+						tmp->Clear();
+						scoreKeeper.Add( tmp );
+					}
 				}
 				else if( count > numForClear )
 				{
 					g->Clear();
+					scoreKeeper.Add( g );
 				}
 				else
 				{
@@ -329,8 +341,10 @@ bool Board::CheckForOneWayMatches( bool flipped )
 ////////////////////////////////////////////////////////////////////////////////
 bool Board::CheckForMatches( void )
 {
+	m_score.BeginMatching();
 	bool horizontal = CheckForOneWayMatches( false );
 	bool vertical   = CheckForOneWayMatches( true );
+	m_score.EndMatching();
 	return horizontal || vertical;
 }
 
@@ -397,8 +411,8 @@ bool Board::FillCleared( void )
 ////////////////////////////////////////////////////////////////////////////////
 Worker::Status Board::Update( float deltaTime )
 {
-	const float swapRate = 4.0f;
-	const float fallRate = 4.0f;
+	const float swapRate = 5.0f;
+	const float fallRate = 5.0f;
 	const float clearRate = 4.0f;
 
 	bool clearing = false;

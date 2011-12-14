@@ -11,20 +11,27 @@ SRCS = \
 	worker.cpp \
 	game.cpp \
 	board.cpp \
+	font.cpp \
+	score.cpp \
 	main.cpp
 
 #-----------------------------------------------------------------------
 
 SDL_LDFLAGS := $(shell sdl-config --libs)
 
+FREETYPE_CFLAGS  := $(shell freetype-config --cflags)
+FREETYPE_LDFLAGS := $(shell freetype-config --libs)
+
 CFLAGS =
 CFLAGS += -DDEBUG
 CFLAGS += -g -O0 -Wall -Werror
 CFLAGS += -D_THREAD_SAFE -D_GNU_SOURCE -D__USE_GNU
+CFLAGS += $(FREETYPE_CFLAGS)
 
 LDFLAGS =
 LDFLAGS += -ldl -lpthread -lrt
 LDFLAGS += -lGL -lGLU $(SDL_LDFLAGS)
+LDFLAGS += $(FREETYPE_LDFLAGS)
 
 CC = g++
 LD = ld
