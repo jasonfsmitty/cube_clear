@@ -15,12 +15,12 @@ class GlFont
 		void Release( void );
 
 		// These are all that's needed for writing text
-		int height( void ) const { return m_height; };
+		float height( void ) const { return m_height; };
 		int list_base( void ) const { return m_base; };
 
 	private:
 
-		int m_height;
+		float m_height;
 		GLuint m_base;
 		GLuint m_textures[ 128 ];
 		GLuint m_widths[ 128 ];
@@ -50,8 +50,16 @@ class GlPrinter
 class GlLayout
 {
 	public:
-		GlLayout( GlFont& font, int width, int height );
+		GlLayout( int width, int height );
+		GlLayout( void );
 		~GlLayout( void );
+
+		int height( void ) const { return m_height; };
+		int width( void ) const { return m_width; };
+
+	private:
+		int m_width;
+		int m_height;
 };
 
 

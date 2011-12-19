@@ -58,9 +58,10 @@ namespace {
 		{
 			for( int i=0; i<width; ++i )
 			{
-				expandedData[ 2 * (i + j*width) ] = expandedData[ 2 * (i + j*width)+1 ] =
-					(i<bitmap.width && j<bitmap.rows)
-					? (bitmap.buffer[ i + bitmap.width * j ])
+				expandedData[ 2 * (i + j * width) ] = 255;
+				expandedData[ 2 * (i + j * width) + 1 ] =
+					( i < bitmap.width && j < bitmap.rows )
+					? bitmap.buffer[ i + bitmap.width * j ]
 					: 0;
 			}
 		}
@@ -74,7 +75,6 @@ namespace {
 		glNewList( (listBase + c), GL_COMPILE );
 			glBindTexture( GL_TEXTURE_2D, texture );
 			glTranslatef( float(bitmapGlyph->left), 0.0f, 0.0f );
-
 			glPushMatrix();
 			glTranslatef( 0.0f, float(bitmapGlyph->top - bitmap.rows), 0.0f );
 
@@ -92,7 +92,6 @@ namespace {
 			fontWidth = face->glyph->advance.x >> 6;
 			glTranslatef( float(fontWidth), 0.0f, 0.0f );
 		glEndList();
-
 		return true;
 	}
 }
@@ -100,7 +99,7 @@ namespace {
 
 ///////////////////////////////////////////////////////////////////////////////////
 GlFont::GlFont( void )
-	: m_height( -1 )
+	: m_height( -1.0f )
 	, m_base( 0 )
 {
 	memset( m_textures, 0, sizeof(m_textures) );
@@ -132,8 +131,11 @@ bool GlFont::Load( const std::string& fontname, int height )
 		return false;
 	}
 
-	m_height = height;
+	m_height = float(height) / 0.63f;
 
+#if 1
+	FT_Set_Char_Size( face, height<<6, height<<6, 96, 96 );
+#else
 	if( FT_Set_Pixel_Sizes( face, 0, height ) )
 	{
 		logError( "Failed to set font '%s' to pixel size %ix%i", fontname.c_str(), height, height );
@@ -141,6 +143,7 @@ bool GlFont::Load( const std::string& fontname, int height )
 		FT_Done_FreeType( lib );
 		return false;
 	}
+#endif
 
 	m_base = glGenLists( 128 );
 	glGenTextures( 128, m_textures );
@@ -196,8 +199,6 @@ GlPrinter::~GlPrinter( void )
 ///////////////////////////////////////////////////////////////////////////////////
 void GlPrinter::Print( int x, int y, const std::string& text )
 {
-	float h = float( m_font.height() ) / 0.63f;
-
 	glPushAttrib( GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT );
 
 	glMatrixMode( GL_MODELVIEW );
@@ -214,7 +215,7 @@ void GlPrinter::Print( int x, int y, const std::string& text )
 
 	glPushMatrix();
 	glLoadIdentity();
-	glTranslatef( float(x), float(y) - h, 0.0f );
+	glTranslatef( x, y, 0.0f );
 	glMultMatrixf( modelview );
 
 	glCallLists( text.size(), GL_UNSIGNED_BYTE, text.c_str() );
@@ -226,11 +227,10 @@ void GlPrinter::Print( int x, int y, const std::string& text )
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-GlLayout::GlLayout( GlFont& font, int width, int height )
+GlLayout::GlLayout( int width, int height )
+	: m_width( width )
+	, m_height( height )
 {
-	width *= font.height();
-	height *= font.height();
-
 	GLint viewport[4];
 
 	glPushAttrib( GL_TRANSFORM_BIT );
@@ -239,24 +239,38 @@ GlLayout::GlLayout( GlFont& font, int width, int height )
 	glPushMatrix();
 	glLoadIdentity();
 
-	if( (width > 0) && (height > 0) )
-	{
-		gluOrtho2D
-			( viewport[0]
-			, viewport[0]+width
-			, viewport[1]
-			, viewport[1]+height
-			);
-	}
-	else
-	{
-		gluOrtho2D
-			( viewport[0]
-			, viewport[2]
-			, viewport[3]
-			, viewport[1]
-			);
-	}
+	gluOrtho2D
+		( viewport[0]
+		, viewport[0]+width
+		, viewport[1]
+		, viewport[1]+height
+		);
+
+	glPopAttrib();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+GlLayout::GlLayout( void )
+	: m_width( 0 )
+	, m_height( 0 )
+{
+	GLint viewport[4];
+
+	glPushAttrib( GL_TRANSFORM_BIT );
+	glGetIntegerv( GL_VIEWPORT, viewport );
+	glMatrixMode( GL_PROJECTION );
+	glPushMatrix();
+	glLoadIdentity();
+
+	gluOrtho2D
+		( viewport[0]
+		, viewport[2]
+		, viewport[1]
+		, viewport[3]
+		);
+
+	m_width  = ( viewport[2] - viewport[0] );
+	m_height = ( viewport[3] - viewport[1] );
 
 	glPopAttrib();
 }
