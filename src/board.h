@@ -153,7 +153,7 @@ class Board : public Worker
 	private:
 
 		//void Swap( int x1, int y1, int x2, int y2 );
-		void Swap( const Point& p1, const Point& p2 );
+		bool Swap( const Point& p1, const Point& p2 );
 
 		bool CheckForMatches( void );
 		bool CheckForOneWayMatches( bool flipped );

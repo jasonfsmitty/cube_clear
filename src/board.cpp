@@ -199,6 +199,54 @@ namespace {
 
 		glPopMatrix();
 	}
+
+	////////////////////////////////////////////////////////////////////////////////
+	void HandleCursorMove
+		( Point& cursor
+		, int size
+		, event::Board::Input input
+		)
+	{
+		switch( input )
+		{
+			case event::Board::UP:
+				if( IsValid( size, cursor.dy(1) ) )
+				{
+					++(cursor.y);
+					logDebug( "move cursor up: %s", cursor.str().c_str() );
+				}
+				break;
+
+			case event::Board::DOWN:
+				if( IsValid( size, cursor.dy(-1) ) )
+				{
+					--(cursor.y);
+					logDebug( "move cursor down: %s", cursor.str().c_str() );
+				}
+				break;
+
+			case event::Board::RIGHT:
+				if( IsValid( size, cursor.dx(1) ) )
+				{
+					++(cursor.x);
+					logDebug( "move cursor right: %s", cursor.str().c_str() );
+				}
+				break;
+
+			case event::Board::LEFT:
+				if( IsValid( size, cursor.dx(-1) ) )
+				{
+					--(cursor.x);
+					logDebug( "move cursor left: %s", cursor.str().c_str() );
+				}
+				break;
+
+			case event::Board::ENTER:
+				// ignore
+				break;
+		}
+	}
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -555,35 +603,10 @@ Worker::Status Board::Handle( const SDL_Event& event )
 			switch( board->input )
 			{
 				case event::Board::UP:
-					if( IsValid( m_size, m_cursor.dy(1) ) )
-					{
-						++(m_cursor.y);
-						logDebug( "move cursor up: %s", m_cursor.str().c_str() );
-					}
-					break;
-
 				case event::Board::DOWN:
-					if( IsValid( m_size, m_cursor.dy(-1) ) )
-					{
-						--(m_cursor.y);
-						logDebug( "move cursor down: %s", m_cursor.str().c_str() );
-					}
-					break;
-
 				case event::Board::RIGHT:
-					if( IsValid( m_size, m_cursor.dx(1) ) )
-					{
-						++(m_cursor.x);
-						logDebug( "move cursor right: %s", m_cursor.str().c_str() );
-					}
-					break;
-
 				case event::Board::LEFT:
-					if( IsValid( m_size, m_cursor.dx(-1) ) )
-					{
-						--(m_cursor.x);
-						logDebug( "move cursor left: %s", m_cursor.str().c_str() );
-					}
+					HandleCursorMove( m_cursor, m_size, board->input );
 					break;
 
 				case event::Board::ENTER:
@@ -596,19 +619,23 @@ Worker::Status Board::Handle( const SDL_Event& event )
 			switch( board->input )
 			{
 				case event::Board::UP:
-					Swap( m_cursor, m_cursor.dy(1) );
+					if( Swap( m_cursor, m_cursor.dy(1) ) )
+						m_cursor.y += 1;
 					break;
 
 				case event::Board::DOWN:
-					Swap( m_cursor, m_cursor.dy(-1) );
+					if( Swap( m_cursor, m_cursor.dy(-1) ) )
+						m_cursor.y -= 1;
 					break;
 
 				case event::Board::LEFT:
-					Swap( m_cursor, m_cursor.dx(-1) );
+					if( Swap( m_cursor, m_cursor.dx(-1) ) )
+						m_cursor.x -= 1;
 					break;
 
 				case event::Board::RIGHT:
-					Swap( m_cursor, m_cursor.dx(1) );
+					if( Swap( m_cursor, m_cursor.dx(1) ) )
+						m_cursor.x += 1;
 					break;
 
 				case event::Board::ENTER:
@@ -618,29 +645,24 @@ Worker::Status Board::Handle( const SDL_Event& event )
 			break;
 
 		case SWAPPING:
-			// no input allowed
-			break;
-
 		case CLEARING:
-			// no input allowed
+		case FALLING:
+			HandleCursorMove( m_cursor, m_size, board->input );
 			break;
 
-		case FALLING:
-			// no input allowed
-			break;
 	}
 
 	return Worker::Continue;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void Board::Swap( const Point& p1, const Point& p2 )
+bool Board::Swap( const Point& p1, const Point& p2 )
 {
 	Gem* left = get_gem( p1 );
 	Gem* right = get_gem( p2 );
 
 	if( !left || !right )
-		return;
+		return false;
 
 	logDebug( "Swapping gems: p1=%s p2=%s", p1.str().c_str(), p2.str().c_str() );
 
@@ -651,6 +673,7 @@ void Board::Swap( const Point& p1, const Point& p2 )
 	right->Swap( p2 - p1 );
 
 	GotoSwappingState();
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -684,11 +707,7 @@ void Board::Render( void )
 		DrawFieldBackground( m_size );
 		DrawField( m_gems, m_size );
 
-		if( m_state == IDLE )
-			DrawCursor( false, m_cursor );
-		else if( m_state == SELECTED )
-			DrawCursor( true, m_cursor );
-
+		DrawCursor( (m_state == SELECTED), m_cursor );
 	glPopMatrix();
 
 	glMatrixMode( GL_PROJECTION );

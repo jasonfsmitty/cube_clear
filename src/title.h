@@ -20,7 +20,7 @@ class TitleScreen : public Worker
 			, m_font()
 		{
 			GotoTitleState();
-			m_font.Load( "VeraBd.ttf", 16 );
+			m_font.Load( "verabd.ttf", 24 );
 		}
 
 		~TitleScreen( void )
@@ -80,8 +80,8 @@ class TitleScreen : public Worker
 
 			GlLayout layout;
 			GlPrinter printer( m_font );
-			glColor4f( 1.0f, 1.0f, 1.0f, 0.9f );
-			printer.Print( 10, m_font.height(), "Hello World" );
+			glColor4f( 1.0f, 1.0f, 1.0f, 0.60f );
+			printer.Print( 10, 10, "Cube Clear v0.1" );
 		}
 
 		Worker::Status HandleTitleEvent( const SDL_Event& event )
