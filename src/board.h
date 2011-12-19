@@ -119,6 +119,7 @@ class Board : public Worker
 			IDLE,
 			SELECTED,
 			SWAPPING,
+			REVERTING,
 			CLEARING,
 			FALLING,
 		};
@@ -127,6 +128,9 @@ class Board : public Worker
 		~Board( void );
 
 		void Reset( void );
+
+		bool cheating( void ) const { return m_cheating; }
+		void SetCheating( bool allow );
 
 		virtual Status Update( float deltaTime );
 		virtual Status Handle( const SDL_Event& event );
@@ -163,6 +167,7 @@ class Board : public Worker
 		void GotoIdleState( void );
 		void GotoSelectedState( void );
 		void GotoSwappingState( void );
+		void GotoRevertingState( void );
 		void GotoClearingState( void );
 		void GotoFallingState( void );
 
@@ -172,9 +177,11 @@ class Board : public Worker
 		State m_state;
 		std::vector< Gem* > m_gems;
 		Point m_cursor;
+		Point m_prevCursor;
 
 		bool m_alive;
 		Score m_score;
+		bool m_cheating;
 };
 
 #endif /* GAME_BOARD_H */

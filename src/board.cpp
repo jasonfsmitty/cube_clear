@@ -256,8 +256,10 @@ Board::Board( int size, int numTypes )
 	, m_state( IDLE )
 	, m_gems( (size)*(size), NULL )
 	, m_cursor( size/2, size/2 )
+	, m_prevCursor( size/2, size/2 )
 	, m_alive( true )
 	, m_score()
+	, m_cheating( false )
 {
 	// nothing
 }
@@ -292,6 +294,13 @@ void Board::Reset( void )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+void Board::SetCheating( bool enable )
+{
+	logInfo( "cheating = %i", enable );
+	m_cheating = enable;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void Board::GotoIdleState( void )
 {
 	m_state = IDLE;
@@ -311,6 +320,13 @@ void Board::GotoSwappingState( void )
 {
 	m_state = SWAPPING;
 	logDebug( "board.state == SWAPPING" );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Board::GotoRevertingState( void )
+{
+	m_state = REVERTING;
+	logDebug( "board.state == REVERTING" );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -560,8 +576,21 @@ Worker::Status Board::Update( float deltaTime )
 			{
 				if( CheckForMatches() )
 					GotoClearingState();
-				else
+				else if( m_cheating )
 					GotoIdleState();
+				else
+				{
+					Swap( m_prevCursor, m_cursor );
+					m_cursor = m_prevCursor;
+					GotoRevertingState();
+				}
+			}
+			break;
+
+		case REVERTING:
+			if( ! swapping )
+			{
+				GotoIdleState();
 			}
 			break;
 
@@ -616,35 +645,44 @@ Worker::Status Board::Handle( const SDL_Event& event )
 			break;
 
 		case SELECTED:
-			switch( board->input )
 			{
-				case event::Board::UP:
-					if( Swap( m_cursor, m_cursor.dy(1) ) )
-						m_cursor.y += 1;
-					break;
+				bool checkSwap = true;
+				Point nextCursor;
 
-				case event::Board::DOWN:
-					if( Swap( m_cursor, m_cursor.dy(-1) ) )
-						m_cursor.y -= 1;
-					break;
+				switch( board->input )
+				{
+					case event::Board::UP:
+						nextCursor = m_cursor.dy( 1 );
+						break;
 
-				case event::Board::LEFT:
-					if( Swap( m_cursor, m_cursor.dx(-1) ) )
-						m_cursor.x -= 1;
-					break;
+					case event::Board::DOWN:
+						nextCursor = m_cursor.dy( -1 );
+						break;
 
-				case event::Board::RIGHT:
-					if( Swap( m_cursor, m_cursor.dx(1) ) )
-						m_cursor.x += 1;
-					break;
+					case event::Board::LEFT:
+						nextCursor = m_cursor.dx( -1 );
+						break;
 
-				case event::Board::ENTER:
-					GotoIdleState();
-					break;
+					case event::Board::RIGHT:
+						nextCursor = m_cursor.dx( 1 );
+						break;
+
+					case event::Board::ENTER:
+						GotoIdleState();
+						checkSwap = false;
+						break;
+				}
+
+				if( checkSwap && Swap( m_cursor, nextCursor ) )
+				{
+					m_prevCursor = m_cursor;
+					m_cursor = nextCursor;
+				}
 			}
 			break;
 
 		case SWAPPING:
+		case REVERTING:
 		case CLEARING:
 		case FALLING:
 			HandleCursorMove( m_cursor, m_size, board->input );
