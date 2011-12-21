@@ -122,10 +122,9 @@ void TitleScreen::RenderMenu( void )
 
 	m_menu.Compile( items, current );
 
-	const float fontHeight   = m_font.height();
-
-	const float startY = ( layout.height() - m_font.height() * items.size() ) * 0.5f;
-	const float screenWidth  = (float) layout.width();
+	const float fontHeight = m_font.height();
+	const float startY = ( layout.height() - fontHeight * items.size() ) * 0.5f;
+	const float screenWidth  = float( layout.width() );
 
 	for( unsigned i = 0; i < items.size(); ++i )
 	{
@@ -135,8 +134,7 @@ void TitleScreen::RenderMenu( void )
 		else
 			oss << items[i];
 
-		float width = m_font.width( oss.str() );
-		float x = 0.5f * ( screenWidth - width );
+		float x = 0.5f * ( screenWidth - m_font.width( oss.str() ) );
 		float y = startY + ( items.size() - i - 1 ) * fontHeight;
 		float alpha = ( i == current ) ? 0.95f : 0.60f;
 
