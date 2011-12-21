@@ -5,172 +5,41 @@
 #include "background.h"
 #include "game.h"
 #include "font.h"
-
-#include <GL/gl.h>
+#include "menu.h"
 
 class TitleScreen : public Worker
 {
 	public:
-		TitleScreen( void )
-			: m_uptime( 0.0f )
-			, m_alive( true )
-			, m_state( TITLE )
-			, m_cubes()
-			, m_game( m_cubes )
-			, m_font()
-		{
-			GotoTitleState();
-			m_font.Load( "verabd.ttf", 24 );
-		}
+		TitleScreen( void );
+		~TitleScreen( void );
 
-		~TitleScreen( void )
-		{
-			// nothing
-		}
+		virtual Worker::Status Handle( const SDL_Event& event );
+		virtual Worker::Status Update( float deltaTime );
+		virtual void Render( void );
 
-		void GotoTitleState( void )
-		{
-			m_state = TITLE;
-			m_game.Reset();
-		}
-
-		void GotoGameState( void )
-		{
-			m_state = GAME;
-			m_game.Resume();
-		}
-
-		virtual Worker::Status Update( float deltaTime )
-		{
-			m_uptime += deltaTime;
-			switch( m_state )
-			{
-				case TITLE:
-					m_cubes.Update( deltaTime );
-					break;
-
-				case GAME:
-					if( Worker::Continue != m_game.Update( deltaTime ) )
-						GotoTitleState();
-					break;
-			}
-			return Worker::Continue;
-		}
-
-		virtual void Render( void )
-		{
-			switch( m_state )
-			{
-				case TITLE:
-					RenderTitle();
-					break;
-
-				case GAME:
-					m_game.Render();
-					break;
-			}
-		}
-
-		void RenderTitle( void )
-		{
-			m_cubes.Render();
-
-			glLoadIdentity();
-			glTranslatef( 0.0f, 0.0f, -1.0f );
-
-			GlLayout layout;
-			GlPrinter printer( m_font );
-			glColor4f( 1.0f, 1.0f, 1.0f, 0.60f );
-			printer.Print( 10, 10, "Cube Clear v0.1" );
-		}
-
-		Worker::Status HandleTitleEvent( const SDL_Event& event )
-		{
-			switch( event.type )
-			{
-				case SDL_QUIT:
-					m_alive = false;
-					return Worker::Exit;
-
-				case SDL_KEYDOWN:
-					switch( event.key.keysym.sym )
-					{
-						case SDLK_RETURN:
-						case SDLK_KP_ENTER:
-							GotoGameState();
-							return Worker::Continue;
-
-						case SDLK_ESCAPE:
-							m_alive = false;
-							return Worker::Exit;
-
-						default:
-							break;
-					}
-					break;
-
-				default:
-					break;
-			}
-			return Worker::Continue;
-		}
-
-		Worker::Status HandleGameEvent( const SDL_Event& event )
-		{
-			if( Worker::Continue != m_game.Handle( event ) )
-				GotoTitleState();
-
-			return Worker::Continue;
-		}
-
-		virtual Worker::Status Handle( const SDL_Event& event )
-		{
-			switch( m_state )
-			{
-				case TITLE:
-					return HandleTitleEvent( event );
-
-				case GAME:
-					return HandleGameEvent( event );
-			}
-
-			return Worker::Exit;
-		}
+		virtual void Pause( void );
+		virtual void Resume( void );
 
 		virtual bool IsAlive( void ) { return m_alive; }
 
-		virtual void Pause( void )
-		{
-			switch( m_state )
-			{
-				case TITLE:
-					m_cubes.Pause();
-					break;
-				case GAME:
-					m_game.Pause();
-					break;
-			}
-		}
-
-		virtual void Resume( void )
-		{
-			switch( m_state )
-			{
-				case TITLE:
-					m_cubes.Resume();
-					break;
-				case GAME:
-					m_game.Resume();
-					break;
-			}
-		}
-
 	private:
+
+		void RenderTitle( void );
+		void RenderMenu( void );
+
+		Worker::Status HandleTitleEvent( const SDL_Event& event );
+		Worker::Status HandleGameEvent( const SDL_Event& event );
+		Worker::Status HandleMenuEvent( const SDL_Event& event );
+
+		void GotoTitleState( void );
+		void GotoGameState( void );
+		void GotoMenuState( void );
 
 		enum State
 		{
 			TITLE,
 			GAME,
+			MENU,
 		};
 
 		float m_uptime;
@@ -180,6 +49,7 @@ class TitleScreen : public Worker
 		CubeBackground m_cubes;
 		Game m_game;
 		GlFont m_font;
+		Menu m_menu;
 };
 
 #endif /* GAME_TITLE_H */

@@ -182,6 +182,18 @@ void GlFont::Release( void )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
+unsigned GlFont::width( const std::string& text )
+{
+	unsigned sum = 0.0f;
+	for( size_t i=0; i < text.size(); ++i )
+	{
+		if( text[i] > 0 && text[i] < 128 )
+			sum += m_widths[ (int) text[i] ];
+	}
+	return sum;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 GlPrinter::GlPrinter( GlFont& font )
@@ -194,6 +206,34 @@ GlPrinter::GlPrinter( GlFont& font )
 GlPrinter::~GlPrinter( void )
 {
 	// nothing
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+void GlPrinter::Print( float x, float y, const std::string& text )
+{
+	glPushAttrib( GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT );
+
+	glMatrixMode( GL_MODELVIEW );
+	glDisable( GL_LIGHTING );
+	glEnable( GL_TEXTURE_2D );
+	glDisable( GL_DEPTH_TEST );
+	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+	glListBase( m_font.list_base() );
+
+	float modelview[16];
+	glGetFloatv( GL_MODELVIEW_MATRIX, modelview );
+
+	glPushMatrix();
+	glLoadIdentity();
+	glTranslatef( x, y, 0.0f );
+	glMultMatrixf( modelview );
+
+	glCallLists( text.size(), GL_UNSIGNED_BYTE, text.c_str() );
+
+	glPopMatrix();
+	glPopAttrib();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

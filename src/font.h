@@ -18,6 +18,9 @@ class GlFont
 		float height( void ) const { return m_height; };
 		int list_base( void ) const { return m_base; };
 
+		unsigned width( const std::string& text );
+		unsigned width( char c ) { return (c>0 && c<128) ? m_widths[(int)c] : 0.0f; }
+
 	private:
 
 		float m_height;
@@ -34,6 +37,7 @@ class GlPrinter
 		~GlPrinter( void );
 
 		void Print( int x, int y, const std::string& text );
+		void Print( float x, float y, const std::string& text );
 
 		GlFont& font( void ) { return m_font; }
 

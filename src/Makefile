@@ -10,9 +10,11 @@ SRCS = \
 	background.cpp \
 	worker.cpp \
 	game.cpp \
+	title.cpp \
 	board.cpp \
 	font.cpp \
 	score.cpp \
+	menu.cpp \
 	main.cpp
 
 #-----------------------------------------------------------------------
