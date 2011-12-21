@@ -16,17 +16,17 @@ class GlFont
 
 		// These are all that's needed for writing text
 		float height( void ) const { return m_height; };
-		int list_base( void ) const { return m_base; };
+		float width( const std::string& text );
+		float width( char c ) { return (c>0 && c<128) ? m_widths[(int)c] : 0.0f; }
 
-		unsigned width( const std::string& text );
-		unsigned width( char c ) { return (c>0 && c<128) ? m_widths[(int)c] : 0.0f; }
+		int list_base( void ) const { return m_base; };
 
 	private:
 
 		float m_height;
 		GLuint m_base;
 		GLuint m_textures[ 128 ];
-		GLuint m_widths[ 128 ];
+		float m_widths[ 128 ];
 };
 
 

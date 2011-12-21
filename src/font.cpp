@@ -28,7 +28,7 @@ namespace {
 		, char c
 		, GLuint listBase
 		, GLuint& texture
-		, GLuint& fontWidth
+		, float& fontWidth
 		)
 	{
 		if( FT_Load_Glyph( face, FT_Get_Char_Index( face, c ), FT_LOAD_DEFAULT ) )
@@ -89,8 +89,8 @@ namespace {
 			glEnd();
 			glPopMatrix();
 
-			fontWidth = face->glyph->advance.x >> 6;
-			glTranslatef( float(fontWidth), 0.0f, 0.0f );
+			fontWidth = float( face->glyph->advance.x ) / 64.0f; // >> 6;
+			glTranslatef( fontWidth, 0.0f, 0.0f );
 		glEndList();
 		return true;
 	}
@@ -182,13 +182,13 @@ void GlFont::Release( void )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-unsigned GlFont::width( const std::string& text )
+float GlFont::width( const std::string& text )
 {
-	unsigned sum = 0.0f;
+	float sum = 0.0f;
 	for( size_t i=0; i < text.size(); ++i )
 	{
 		if( text[i] > 0 && text[i] < 128 )
-			sum += m_widths[ (int) text[i] ];
+			sum += m_widths[ int(text[i]) ];
 	}
 	return sum;
 }
