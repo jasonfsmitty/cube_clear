@@ -4,6 +4,30 @@
 #include <GL/gl.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////
+namespace {
+
+	class MenuStart : public SimpleEntry
+	{
+		public:
+			MenuStart( const std::string& name, TitleScreen& title )
+				: SimpleEntry( name )
+				, m_title( title )
+			{}
+
+			virtual ~MenuStart( void ) {}
+
+		protected:
+			virtual void Execute( Menu& menu )
+			{
+				m_title.GotoGameState();
+			}
+
+			TitleScreen& m_title;
+	};
+
+}; // local namespace
+
+///////////////////////////////////////////////////////////////////////////////////////
 TitleScreen::TitleScreen( void )
 	: Worker()
 	, m_uptime( 0.0f )
@@ -17,7 +41,7 @@ TitleScreen::TitleScreen( void )
 	m_font.Load( "verabd.ttf", 24 );
 
 	// build the menu
-	m_menu.Add( new TestEntry( "Start" ) );
+	m_menu.Add( new MenuStart( "Start", *this ) );
 	m_menu.Add( new TestEntry( "High Scores" ) );
 	m_menu.Add( new TestEntry( "Options" ) );
 	m_menu.Add( new TestEntry( "About" ) );
@@ -129,9 +153,11 @@ void TitleScreen::RenderMenu( void )
 	for( unsigned i = 0; i < items.size(); ++i )
 	{
 		std::ostringstream oss;
+#if 0
 		if( i == current )
 			oss << "(" << items[i] << ")";
 		else
+#endif
 			oss << items[i];
 
 		float x = 0.5f * ( screenWidth - m_font.width( oss.str() ) );

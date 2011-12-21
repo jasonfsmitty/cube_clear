@@ -22,6 +22,10 @@ class TitleScreen : public Worker
 
 		virtual bool IsAlive( void ) { return m_alive; }
 
+		void GotoTitleState( void );
+		void GotoGameState( void );
+		void GotoMenuState( void );
+
 	private:
 
 		void RenderTitle( void );
@@ -30,10 +34,6 @@ class TitleScreen : public Worker
 		Worker::Status HandleTitleEvent( const SDL_Event& event );
 		Worker::Status HandleGameEvent( const SDL_Event& event );
 		Worker::Status HandleMenuEvent( const SDL_Event& event );
-
-		void GotoTitleState( void );
-		void GotoGameState( void );
-		void GotoMenuState( void );
 
 		enum State
 		{
