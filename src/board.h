@@ -6,6 +6,7 @@
 #include <sstream>
 #include "log.h"
 #include "score.h"
+#include "font.h"
 
 struct Point 
 {
@@ -182,6 +183,7 @@ class Board : public Worker
 		bool m_alive;
 		Score m_score;
 		bool m_cheating;
+		GlFont m_font;
 };
 
 #endif /* GAME_BOARD_H */

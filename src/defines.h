@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <sstream>
 
 namespace utils {
 
@@ -13,6 +14,9 @@ namespace utils {
 #define QUOTEME(x)        _QUOTEME_(x)
 
 #define ARRAY_SIZE(x)     (int(sizeof(x) / sizeof(x[0])))
+
+#define Min(x,y)  ((x) < (y) ? (x) : (y))
+#define Max(x,y)  ((x) < (y) ? (y) : (y))
 
 inline int64_t KbToBytes( int64_t kb ) { return kb << 10; }
 inline int64_t MbToBytes( int64_t mb ) { return mb << 20; }
@@ -30,6 +34,14 @@ inline float randf( void )
 inline float randf( float min, float max )
 {
 	return (min + randf() * (max - min));
+}
+
+template< typename T >
+std::string ToString( const T& t )
+{
+	std::ostringstream oss;
+	oss << t;
+	return oss.str();
 }
 
 } // namespace utils

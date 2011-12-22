@@ -2,8 +2,12 @@
 #include "assert.h"
 #include "event.h"
 #include <GL/gl.h>
+#include <iomanip>
 
 namespace {
+	const std::string FONT_FILENAME = "verabd.ttf";
+	const int FONT_SIZE = 18;
+
 	const float FIELD_MARGIN = 0.25f;
 	const float FIELD_SCALE  = 2.0f;
 
@@ -260,6 +264,7 @@ Board::Board( int size, int numTypes )
 	, m_alive( true )
 	, m_score()
 	, m_cheating( false )
+	, m_font()
 {
 	// nothing
 }
@@ -291,6 +296,9 @@ void Board::Reset( void )
 		Update( 1000.0f );
 	}
 	m_score.Reset();
+
+	m_font.Release();
+	m_font.Load( FONT_FILENAME, FONT_SIZE );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -718,6 +726,7 @@ bool Board::Swap( const Point& p1, const Point& p2 )
 void Board::Render( void )
 {
 	const float blockScale = 1.0f / float(m_size);
+#if 0
 
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
@@ -736,7 +745,6 @@ void Board::Render( void )
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 	glPushMatrix();
-
 		glTranslatef( FIELD_MARGIN, FIELD_MARGIN, 0.0f );
 		glScalef( FIELD_SCALE, FIELD_SCALE, 0.0f );
 
@@ -744,7 +752,6 @@ void Board::Render( void )
 
 		DrawFieldBackground( m_size );
 		DrawField( m_gems, m_size );
-
 		DrawCursor( (m_state == SELECTED), m_cursor );
 	glPopMatrix();
 
@@ -752,6 +759,39 @@ void Board::Render( void )
 	glPopMatrix();
 	glMatrixMode( GL_MODELVIEW );
 	glPopMatrix();
+#else
+
+	GlLayout layout;
+	GlPrinter printer( m_font );
+
+	const float margin = 0.10f; // percentage
+	const float shift  = layout.height() * margin;
+	const float resize = layout.height() - ( 2.0f * shift );
+
+	glPushMatrix();
+		glTranslatef( shift, shift, 0.0f );
+		glScalef( resize, resize, 0.0f );
+		glScalef( blockScale, blockScale, 0.0f );
+
+		DrawFieldBackground( m_size );
+		DrawField( m_gems, m_size );
+		DrawCursor( (m_state == SELECTED), m_cursor );
+	glPopMatrix();
+
+	// draw the score
+	{
+		float left = shift + resize;
+
+		std::ostringstream oss;
+		oss << std::setw(8) << std::setfill('0') << std::right << m_score.value();
+
+		float x = left + 0.5f * ( layout.width() - left - m_font.width( oss.str() ) );
+		float y = layout.height() - 4.0f * m_font.height();
+
+		glColor4f( 1.0f, 1.0f, 1.0f, 0.9f );
+		printer.Print( x, y, oss.str() );
+	}
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////
