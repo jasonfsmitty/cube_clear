@@ -6,7 +6,7 @@
 
 namespace {
 	const std::string FONT_FILENAME = "verabd.ttf";
-	const int FONT_SIZE = 18;
+	const int FONT_SIZE = 22;
 
 	const float FIELD_MARGIN = 0.25f;
 	const float FIELD_SCALE  = 2.0f;
@@ -54,11 +54,25 @@ namespace {
 	}
 #endif
 
-	void DrawGem( float x, float y, float rotation, float scale )
+	void DrawGem( int type, float x, float y, float rotation, float scale, float alpha )
 	{
 		static const float size = 0.80f;
 		static const float margin = (1.0f - size) / 2.0f;
 		static const float width = 1.0f - margin;
+
+		float colors[][4] =
+		{
+			{ 1.0f, 0.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 0.0f, 1.0f, 1.0f },
+			{ 1.0f, 1.0f, 0.0f, 1.0f },
+			{ 1.0f, 0.0f, 1.0f, 1.0f },
+			{ 0.0f, 1.0f, 1.0f, 1.0f },
+			{ 1.0f, 1.0f, 1.0f, 1.0f },
+		};
+
+		colors[ type ][3] = alpha;
+		glColor4fv( colors[ type ] );
 
 		glPushMatrix();
 		glTranslatef( x+0.5f, y+0.5f, 0.0f );
@@ -93,7 +107,8 @@ namespace {
 
 		// draw the grid
 		glLineWidth( 2.0f );
-		glColor4f( 0.8f, 0.8f, 0.8f, 0.75f );
+		const float c = 0.8f;
+		glColor4f( c, c, c, 0.75f );
 		glBegin( GL_LINES );
 		for( int i = 0; i <= size; i++ )
 		{
@@ -107,17 +122,6 @@ namespace {
 
 	void DrawField( const std::vector< Gem* > gems, const int size )
 	{
-		float colors[][4] =
-		{
-			{ 1.0f, 0.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 0.0f, 1.0f, 1.0f },
-			{ 1.0f, 1.0f, 0.0f, 1.0f },
-			{ 1.0f, 0.0f, 1.0f, 1.0f },
-			{ 0.0f, 1.0f, 1.0f, 1.0f },
-			{ 1.0f, 1.0f, 1.0f, 1.0f },
-		};
-
 		for( unsigned i=0; i < gems.size(); i++ )
 		{
 			Gem* gem = gems[i];
@@ -155,11 +159,8 @@ namespace {
 					break;
 			}
 
-			colors[ gem->type ][3] = alpha;
-			glColor4fv( colors[ gem->type ] );
-
 			// Finally draw the gem ...
-			DrawGem( x, y, spin, scale );
+			DrawGem( gem->type, x, y, spin, scale, alpha );
 		}
 	}
 
@@ -483,8 +484,8 @@ bool Board::FillCleared( void )
 ////////////////////////////////////////////////////////////////////////////////
 Worker::Status Board::Update( float deltaTime )
 {
-	const float swapRate = 5.0f;
-	const float fallRate = 5.0f;
+	const float swapRate = 6.0f;
+	const float fallRate = 6.0f;
 	const float clearRate = 4.0f;
 
 	bool clearing = false;
@@ -726,43 +727,8 @@ bool Board::Swap( const Point& p1, const Point& p2 )
 void Board::Render( void )
 {
 	const float blockScale = 1.0f / float(m_size);
-#if 0
-
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	// glLoadIdentity();
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();
-	glLoadIdentity();
-
-	glOrtho
-		( 0.0f, 4.0f // left, right
-		, 0.0f, 3.0f // bottom, top
-		, 1.0f, -1.0f // near, far
-		);
-
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-	glPushMatrix();
-		glTranslatef( FIELD_MARGIN, FIELD_MARGIN, 0.0f );
-		glScalef( FIELD_SCALE, FIELD_SCALE, 0.0f );
-
-		glScalef( blockScale, blockScale, 0.0f );
-
-		DrawFieldBackground( m_size );
-		DrawField( m_gems, m_size );
-		DrawCursor( (m_state == SELECTED), m_cursor );
-	glPopMatrix();
-
-	glMatrixMode( GL_PROJECTION );
-	glPopMatrix();
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
-#else
 
 	GlLayout layout;
-	GlPrinter printer( m_font );
 
 	const float margin = 0.10f; // percentage
 	const float shift  = layout.height() * margin;
@@ -780,18 +746,47 @@ void Board::Render( void )
 
 	// draw the score
 	{
+		GlPrinter printer( m_font );
+		const float fontColor[4] = { 1.0f, 1.0f, 0.6f, 0.9f };
+
 		float left = shift + resize;
 
 		std::ostringstream oss;
 		oss << std::setw(8) << std::setfill('0') << std::right << m_score.value();
 
-		float x = left + 0.5f * ( layout.width() - left - m_font.width( oss.str() ) );
 		float y = layout.height() - 4.0f * m_font.height();
 
-		glColor4f( 1.0f, 1.0f, 1.0f, 0.9f );
-		printer.Print( x, y, oss.str() );
+		printer.set_align( GlPrinter::Center );
+		printer.set_width( layout.width() - left );
+
+		glColor4fv( fontColor );
+		printer.Print( left, y, "Score" );
+		//glColor4f( 1.0f, 1.0f, 1.0f, 0.9f );
+		printer.Print( left, y - m_font.height(), oss.str() );
+
+		float third = 0.25f * (layout.width() - left);
+
+		printer.set_align( GlPrinter::Right );
+		printer.set_width( third );
+
+		float x1 = left + third;
+		for( int i=0; i < m_numTypes; ++i )
+		{
+			float y1 = y - float( i + 4 ) * m_font.height();
+
+			glPushMatrix();
+			glTranslatef( x1, y1, 0.0f );
+			glScalef( m_font.height(), m_font.height(), 0.0f );
+			DrawGem( i, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f );
+			glPopMatrix();
+
+			std::ostringstream value;
+			value << std::setw(3) << std::setfill('0') << std::right << m_score.cleared(i);
+
+			glColor4fv( fontColor );
+			printer.Print( left + 2.0f*third, y1, value.str() );
+		}
 	}
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////

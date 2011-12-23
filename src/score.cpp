@@ -4,6 +4,7 @@
 #include "log.h"
 #include "board.h"
 #include <set>
+#include "assert.h"
 
 const unsigned POINTS_PER_GEM = 50;
 
@@ -11,9 +12,10 @@ const unsigned POINTS_PER_GEM = 50;
 Score::Score( void )
 	: m_score( 0 )
 	, m_wave( 0 )
+	, m_cleared()
 	, m_matches()
 {
-	// nothing
+	Reset();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -28,6 +30,10 @@ void Score::Reset( void )
 	m_score = 0;
 	m_matches.clear();
 	m_wave = 0;
+
+	m_cleared.resize( 32 );
+	for( size_t i = 0; i < m_cleared.size(); ++i )
+		m_cleared[i] = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -58,6 +64,13 @@ void Score::EndMatching( void )
 		{
 			for( unsigned g=0; g < m_matches[m].size(); ++g )
 				matchSet.insert( m_matches[m][g] );
+		}
+
+		std::set< const Gem* >::iterator iter;
+		for( iter = matchSet.begin(); iter != matchSet.end(); iter++ )
+		{
+			ASSERT( (*iter)->type < int(m_cleared.size()) );
+			m_cleared[ (*iter)->type ] ++;
 		}
 
 		unsigned amount = ( m_wave * m_matches.size() * matchSet.size() ) * POINTS_PER_GEM;

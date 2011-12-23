@@ -182,6 +182,34 @@ void GlFont::Release( void )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
+void GlFont::Print( float x, float y, const std::string& text )
+{
+	glPushAttrib( GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT );
+
+	glMatrixMode( GL_MODELVIEW );
+	glDisable( GL_LIGHTING );
+	glEnable( GL_TEXTURE_2D );
+	glDisable( GL_DEPTH_TEST );
+	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+	glListBase( m_base );
+
+	float modelview[16];
+	glGetFloatv( GL_MODELVIEW_MATRIX, modelview );
+
+	glPushMatrix();
+	glLoadIdentity();
+	glTranslatef( x, y, 0.0f );
+	glMultMatrixf( modelview );
+
+	glCallLists( text.size(), GL_UNSIGNED_BYTE, text.c_str() );
+
+	glPopMatrix();
+	glPopAttrib();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
 float GlFont::width( const std::string& text )
 {
 	float sum = 0.0f;
@@ -198,6 +226,10 @@ float GlFont::width( const std::string& text )
 ///////////////////////////////////////////////////////////////////////////////////
 GlPrinter::GlPrinter( GlFont& font )
 	: m_font( font )
+	, m_alignment( GlPrinter::Left )
+	, m_width( 0.0f )
+	, m_xpos( 0.0f )
+	, m_ypos( 0.0f )
 {
 	// nothing
 }
@@ -209,59 +241,31 @@ GlPrinter::~GlPrinter( void )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-void GlPrinter::Print( float x, float y, const std::string& text )
+void GlPrinter::Print( const std::string& text )
 {
-	glPushAttrib( GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT );
+	float x = m_xpos;
+	float y = m_ypos;
+	float len = m_font.width( text );
 
-	glMatrixMode( GL_MODELVIEW );
-	glDisable( GL_LIGHTING );
-	glEnable( GL_TEXTURE_2D );
-	glDisable( GL_DEPTH_TEST );
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+	switch( m_alignment )
+	{
+		case Right:
+			x = m_xpos + ( m_width - len );
+			m_xpos += m_width;
+			break;
 
-	glListBase( m_font.list_base() );
+		case Center:
+			x = m_xpos + 0.5f * ( m_width - len );
+			m_xpos += m_width;
+			break;
 
-	float modelview[16];
-	glGetFloatv( GL_MODELVIEW_MATRIX, modelview );
+		case Left:
+		default:
+			m_xpos += len;
+			break;
+	}
 
-	glPushMatrix();
-	glLoadIdentity();
-	glTranslatef( x, y, 0.0f );
-	glMultMatrixf( modelview );
-
-	glCallLists( text.size(), GL_UNSIGNED_BYTE, text.c_str() );
-
-	glPopMatrix();
-	glPopAttrib();
-}
-
-///////////////////////////////////////////////////////////////////////////////////
-void GlPrinter::Print( int x, int y, const std::string& text )
-{
-	glPushAttrib( GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT );
-
-	glMatrixMode( GL_MODELVIEW );
-	glDisable( GL_LIGHTING );
-	glEnable( GL_TEXTURE_2D );
-	glDisable( GL_DEPTH_TEST );
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-	glListBase( m_font.list_base() );
-
-	float modelview[16];
-	glGetFloatv( GL_MODELVIEW_MATRIX, modelview );
-
-	glPushMatrix();
-	glLoadIdentity();
-	glTranslatef( x, y, 0.0f );
-	glMultMatrixf( modelview );
-
-	glCallLists( text.size(), GL_UNSIGNED_BYTE, text.c_str() );
-
-	glPopMatrix();
-	glPopAttrib();
+	m_font.Print( x, y, text );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

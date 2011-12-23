@@ -14,19 +14,24 @@ class Score
 
 		unsigned value( void ) const { return m_score; }
 
+		unsigned cleared( int type ) const
+		{
+			return ( type < 0 || unsigned(type) >= m_cleared.size() ) ? 0 : m_cleared[ type ];
+		}
+
 		void Reset( void );
 
 		void BeginMatching( void );
 		void EndMatching( void );
 
 		void Add( const std::vector< const Gem* >& gem );
-
 		void MarkIdle( void );
 
 	private:
 
 		unsigned m_score;
 		unsigned m_wave;
+		std::vector< unsigned > m_cleared;
 
 		std::vector< std::vector< const Gem* > > m_matches;
 };
